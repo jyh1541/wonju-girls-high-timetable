@@ -16,9 +16,13 @@ SCHEDULE = {
 
 teachers_data = {}
 classes_data = {}
+rooms_data = {}
 teacher_list = []
 
-# 교사 데이터 파싱 (2행 단위: 과목행 + 학반행)
+# 제외할 과목 키워드
+SKIP_SUBJECTS = ["동아리", "자율"]
+
+# 교사 데이터 파싱 (3행 단위: 과목행 + 학반행 + 특별실행)
 row = 3  # 데이터 시작 (1,2행은 헤더)
 while row <= ws.max_row:
     teacher_num = ws.cell(row=row, column=1).value
@@ -33,6 +37,7 @@ while row <= ws.max_row:
 
     subject_row = row
     class_row = row + 1
+    room_row = row + 2
 
     teacher_schedule = {}
 
@@ -42,11 +47,23 @@ while row <= ws.max_row:
             period = period_idx + 1
             subject = ws.cell(row=subject_row, column=col).value
             class_name = ws.cell(row=class_row, column=col).value
+            room = ws.cell(row=room_row, column=col).value
 
             if subject and class_name:
                 subject = str(subject).strip()
                 class_name = str(class_name).strip()
-                day_schedule[period] = {"subject": subject, "class": class_name}
+                room = str(room).strip() if room else ""
+
+                # 동아리/자율 과목 제외
+                if any(skip in subject for skip in SKIP_SUBJECTS):
+                    day_schedule[period] = None
+                    continue
+
+                entry = {"subject": subject, "class": class_name}
+                if room:
+                    entry["room"] = room
+
+                day_schedule[period] = entry
 
                 # 학반 시간표에도 추가
                 if class_name not in classes_data:
@@ -54,22 +71,42 @@ while row <= ws.max_row:
                 if day not in classes_data[class_name]:
                     classes_data[class_name][day] = {}
 
-                entry = {"subject": subject, "teacher": teacher_name}
+                class_entry = {"subject": subject, "teacher": teacher_name}
+                if room:
+                    class_entry["room"] = room
+
                 existing = classes_data[class_name][day].get(period)
                 if existing:
                     if isinstance(existing, list):
-                        existing.append(entry)
+                        existing.append(class_entry)
                     else:
-                        classes_data[class_name][day][period] = [existing, entry]
+                        classes_data[class_name][day][period] = [existing, class_entry]
                 else:
-                    classes_data[class_name][day][period] = entry
+                    classes_data[class_name][day][period] = class_entry
+
+                # 특별실 시간표에 추가
+                if room:
+                    if room not in rooms_data:
+                        rooms_data[room] = {}
+                    if day not in rooms_data[room]:
+                        rooms_data[room][day] = {}
+
+                    room_entry = {"subject": subject, "teacher": teacher_name, "class": class_name}
+                    existing_room = rooms_data[room][day].get(period)
+                    if existing_room:
+                        if isinstance(existing_room, list):
+                            existing_room.append(room_entry)
+                        else:
+                            rooms_data[room][day][period] = [existing_room, room_entry]
+                    else:
+                        rooms_data[room][day][period] = room_entry
             else:
                 day_schedule[period] = None
 
         teacher_schedule[day] = day_schedule
 
     teachers_data[teacher_name] = teacher_schedule
-    row += 2  # 다음 교사 (2행 단위)
+    row += 3  # 다음 교사 (3행 단위)
 
 # 학반 목록 정렬
 import re
@@ -79,12 +116,15 @@ def class_sort_key(c):
 
 class_list = sorted([c for c in classes_data if re.match(r'^\d+-\d+$', c)], key=class_sort_key)
 teacher_list.sort()
+room_list = sorted(rooms_data.keys())
 
 output = {
     "teachers": teachers_data,
     "classes": classes_data,
+    "rooms": rooms_data,
     "teacherList": teacher_list,
     "classList": class_list,
+    "roomList": room_list,
 }
 
 with open('data.js', 'w', encoding='utf-8') as f:
@@ -92,6 +132,7 @@ with open('data.js', 'w', encoding='utf-8') as f:
     json.dump(output, f, ensure_ascii=False, indent=None)
     f.write(';\n')
 
-print(f"변환 완료: 교사 {len(teacher_list)}명, 학반 {len(class_list)}개")
+print(f"변환 완료: 교사 {len(teacher_list)}명, 학반 {len(class_list)}개, 특별실 {len(room_list)}개")
 print(f"교사 목록: {teacher_list[:10]}")
 print(f"학반 목록: {class_list}")
+print(f"특별실 목록: {room_list}")

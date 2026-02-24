@@ -191,6 +191,13 @@ body {
     font-weight: 500;
 }
 
+.cell-room {
+    font-size: 0.55rem;
+    color: #e67e22;
+    font-weight: 600;
+    margin-top: 1px;
+}
+
 /* 빈 셀 */
 .cell-empty { background: #fafbff; }
 

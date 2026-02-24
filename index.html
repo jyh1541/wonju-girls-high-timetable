@@ -18,6 +18,7 @@
         <div class="tab-wrap">
             <button id="tab-teacher" class="tab-btn active" onclick="switchTab('teacher')">교사별</button>
             <button id="tab-class" class="tab-btn" onclick="switchTab('class')">학반별</button>
+            <button id="tab-room" class="tab-btn" onclick="switchTab('room')">특별실</button>
         </div>
 
         <!-- 교사 선택 -->
@@ -31,6 +32,13 @@
         <div id="select-class" class="select-wrap hidden">
             <select id="class-dropdown" onchange="onClassSelect(this.value)">
                 <option value="">학반을 선택하세요</option>
+            </select>
+        </div>
+
+        <!-- 특별실 선택 -->
+        <div id="select-room" class="select-wrap hidden">
+            <select id="room-dropdown" onchange="onRoomSelect(this.value)">
+                <option value="">특별실을 선택하세요</option>
             </select>
         </div>
 

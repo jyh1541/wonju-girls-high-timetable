@@ -5,6 +5,7 @@ let currentTab = "teacher";
 (function init() {
     const teacherDD = document.getElementById("teacher-dropdown");
     const classDD = document.getElementById("class-dropdown");
+    const roomDD = document.getElementById("room-dropdown");
 
     TIMETABLE_DATA.teacherList.forEach(t => {
         const opt = document.createElement("option");
@@ -19,21 +20,33 @@ let currentTab = "teacher";
         opt.textContent = c;
         classDD.appendChild(opt);
     });
+
+    (TIMETABLE_DATA.roomList || []).forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r;
+        opt.textContent = r;
+        roomDD.appendChild(opt);
+    });
 })();
 
 function switchTab(tab) {
     currentTab = tab;
     document.getElementById("tab-teacher").classList.toggle("active", tab === "teacher");
     document.getElementById("tab-class").classList.toggle("active", tab === "class");
+    document.getElementById("tab-room").classList.toggle("active", tab === "room");
     document.getElementById("select-teacher").classList.toggle("hidden", tab !== "teacher");
     document.getElementById("select-class").classList.toggle("hidden", tab !== "class");
+    document.getElementById("select-room").classList.toggle("hidden", tab !== "room");
 
     if (tab === "teacher") {
         const v = document.getElementById("teacher-dropdown").value;
         if (v) onTeacherSelect(v); else showPlaceholder();
-    } else {
+    } else if (tab === "class") {
         const v = document.getElementById("class-dropdown").value;
         if (v) onClassSelect(v); else showPlaceholder();
+    } else {
+        const v = document.getElementById("room-dropdown").value;
+        if (v) onRoomSelect(v); else showPlaceholder();
     }
 }
 
@@ -65,6 +78,15 @@ function onClassSelect(name) {
     if (!data) return;
     currentLabel = name + "반";
     renderTable(data, "class");
+    showActionBtns();
+}
+
+function onRoomSelect(name) {
+    if (!name) { showPlaceholder(); return; }
+    const data = (TIMETABLE_DATA.rooms || {})[name];
+    if (!data) return;
+    currentLabel = name;
+    renderTable(data, "room");
     showActionBtns();
 }
 
@@ -110,6 +132,15 @@ function getSubjectDynColor(subject) {
     return SUBJ_COLOR_MAP[key];
 }
 
+function getCellRoom(cell) {
+    if (!cell) return "";
+    if (Array.isArray(cell)) {
+        const rooms = cell.map(c => c.room).filter(Boolean);
+        return rooms.length > 0 ? rooms[0] : "";
+    }
+    return cell.room || "";
+}
+
 function renderTable(data, mode) {
     const container = document.getElementById("timetable-container");
     const maxPeriod = 7;
@@ -131,44 +162,62 @@ function renderTable(data, mode) {
                 return;
             }
 
+            let subject, sub, bg, room;
+
             if (Array.isArray(cell)) {
-                const subjects = cell.map(c => c.subject).join('/');
-                const sub = mode === "teacher"
-                    ? cell.map(c => c.class || c["class"]).join('/')
-                    : cell.map(c => c.teacher).join(', ');
+                subject = cell.map(c => c.subject).join('/');
+                room = getCellRoom(cell);
                 if (mode === "teacher") {
-                    const bg = getComboColor(cell[0].class || cell[0]["class"], cell[0].subject);
-                    html += `<td style="background:${bg}"><div class="cell-subject">${subjects}</div><div class="cell-sub">${sub}</div></td>`;
+                    sub = cell.map(c => c.class || c["class"]).join('/');
+                    bg = getComboColor(cell[0].class || cell[0]["class"], cell[0].subject);
+                } else if (mode === "class") {
+                    sub = cell.map(c => c.teacher).join(', ');
+                    bg = getSubjectDynColor(cell[0].subject);
                 } else {
-                    html += `<td style="background:${getSubjectDynColor(cell[0].subject)}"><div class="cell-subject">${subjects}</div><div class="cell-sub">${sub}</div></td>`;
+                    // room mode: sub = teacher / class
+                    sub = cell.map(c => c.teacher + ' ' + (c.class || c["class"])).join(', ');
+                    bg = getSubjectDynColor(cell[0].subject);
                 }
-                return;
+            } else {
+                subject = cell.subject;
+                room = cell.room || "";
+                const className = cell.class || cell["class"];
+                if (mode === "teacher") {
+                    sub = className;
+                    bg = getComboColor(className, subject);
+                } else if (mode === "class") {
+                    sub = cell.teacher;
+                    bg = getSubjectDynColor(subject);
+                } else {
+                    // room mode
+                    sub = (cell.teacher || "") + " " + (className || "");
+                    bg = getSubjectDynColor(subject);
+                }
             }
 
-            const subject = cell.subject;
-            const className = cell.class || cell["class"];
-            const sub = mode === "teacher" ? className : cell.teacher;
-            if (mode === "teacher") {
-                const bg = getComboColor(className, subject);
-                html += `<td style="background:${bg}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div></td>`;
-            } else {
-                html += `<td style="background:${getSubjectDynColor(subject)}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div></td>`;
+            html += `<td style="background:${bg}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div>`;
+            if (room && mode !== "room") {
+                html += `<div class="cell-room">${room}</div>`;
             }
+            html += '</td>';
         });
         html += '</tr>';
     }
 
-    html += '</tbody></table>';
-
-    html += '</div>';
+    html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
 // 현재 시간표 데이터를 2D 배열로 추출
 function getCurrentTableData() {
-    const data = currentTab === "teacher"
-        ? TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value]
-        : TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    let data;
+    if (currentTab === "teacher") {
+        data = TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value];
+    } else if (currentTab === "class") {
+        data = TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    } else {
+        data = (TIMETABLE_DATA.rooms || {})[document.getElementById("room-dropdown").value];
+    }
     if (!data) return null;
 
     const mode = currentTab;
@@ -182,13 +231,19 @@ function getCurrentTableData() {
             if (!cell) { row.push(""); return; }
             if (Array.isArray(cell)) {
                 const subj = cell.map(c => c.subject).join('/');
-                const sub = mode === "teacher"
-                    ? cell.map(c => c.class || c["class"]).join('/')
-                    : cell.map(c => c.teacher).join(', ');
-                row.push(subj + "\n" + sub);
+                let sub;
+                if (mode === "teacher") sub = cell.map(c => c.class || c["class"]).join('/');
+                else if (mode === "class") sub = cell.map(c => c.teacher).join(', ');
+                else sub = cell.map(c => c.teacher + ' ' + (c.class || c["class"])).join(', ');
+                const room = getCellRoom(cell);
+                row.push(subj + "\n" + sub + (room && mode !== "room" ? "\n" + room : ""));
             } else {
-                const sub = mode === "teacher" ? (cell.class || cell["class"]) : cell.teacher;
-                row.push(cell.subject + "\n" + (sub || ""));
+                let sub;
+                if (mode === "teacher") sub = cell.class || cell["class"];
+                else if (mode === "class") sub = cell.teacher;
+                else sub = (cell.teacher || "") + " " + (cell.class || cell["class"] || "");
+                const room = cell.room || "";
+                row.push(cell.subject + "\n" + (sub || "") + (room && mode !== "room" ? "\n" + room : ""));
             }
         });
         rows.push(row);
@@ -198,9 +253,14 @@ function getCurrentTableData() {
 
 // 이미지용 테이블 HTML을 데이터에서 직접 생성 (DOM 클론 없이)
 function buildImageHTML() {
-    const data = currentTab === "teacher"
-        ? TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value]
-        : TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    let data;
+    if (currentTab === "teacher") {
+        data = TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value];
+    } else if (currentTab === "class") {
+        data = TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    } else {
+        data = (TIMETABLE_DATA.rooms || {})[document.getElementById("room-dropdown").value];
+    }
     if (!data) return "";
     const mode = currentTab;
 
@@ -221,21 +281,42 @@ function buildImageHTML() {
             const cell = data[day] ? data[day][p] : null;
             if (!cell) { html += `<td ${emptyStyle}></td>`; return; }
 
-            let subject, sub, bg;
+            let subject, sub, bg, room;
             if (Array.isArray(cell)) {
                 subject = cell.map(c => c.subject).join('/');
-                sub = mode === "teacher" ? cell.map(c => c.class||c["class"]).join('/') : cell.map(c => c.teacher).join(', ');
-                bg = mode === "teacher" ? getComboColor(cell[0].class||cell[0]["class"], cell[0].subject) : getSubjectBg(cell[0].subject);
+                room = getCellRoom(cell);
+                if (mode === "teacher") {
+                    sub = cell.map(c => c.class||c["class"]).join('/');
+                    bg = getComboColor(cell[0].class||cell[0]["class"], cell[0].subject);
+                } else if (mode === "class") {
+                    sub = cell.map(c => c.teacher).join(', ');
+                    bg = getSubjectBg(cell[0].subject);
+                } else {
+                    sub = cell.map(c => c.teacher + ' ' + (c.class||c["class"])).join(', ');
+                    bg = getSubjectBg(cell[0].subject);
+                }
             } else {
                 subject = cell.subject;
+                room = cell.room || "";
                 const cn = cell.class || cell["class"];
-                sub = mode === "teacher" ? cn : cell.teacher;
-                bg = mode === "teacher" ? getComboColor(cn, subject) : getSubjectBg(subject);
+                if (mode === "teacher") {
+                    sub = cn;
+                    bg = getComboColor(cn, subject);
+                } else if (mode === "class") {
+                    sub = cell.teacher;
+                    bg = getSubjectBg(subject);
+                } else {
+                    sub = (cell.teacher || "") + " " + (cn || "");
+                    bg = getSubjectBg(subject);
+                }
             }
 
             html += `<td style="background:${bg};border:1px solid #e2e8f0;height:50px;text-align:center;vertical-align:middle;padding:6px 4px;">`;
             html += `<div style="font-weight:600;color:#1e293b;font-size:11px;line-height:1.3;">${subject}</div>`;
             html += `<div style="font-size:9px;color:#64748b;margin-top:2px;">${sub || ""}</div>`;
+            if (room && mode !== "room") {
+                html += `<div style="font-size:8px;color:#e67e22;font-weight:600;margin-top:1px;">${room}</div>`;
+            }
             html += '</td>';
         });
         html += '</tr>';
@@ -284,11 +365,16 @@ function downloadImage() {
     });
 }
 
-// 엑셀(.xlsx) 다운로드 - 과목/학반(교사) 2행으로 분리
+// 엑셀(.xlsx) 다운로드 - 과목/학반(교사)/특별실 행으로 분리
 function downloadExcel() {
-    const data = currentTab === "teacher"
-        ? TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value]
-        : TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    let data;
+    if (currentTab === "teacher") {
+        data = TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value];
+    } else if (currentTab === "class") {
+        data = TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    } else {
+        data = (TIMETABLE_DATA.rooms || {})[document.getElementById("room-dropdown").value];
+    }
     if (!data) return;
     const mode = currentTab;
 
@@ -303,32 +389,50 @@ function downloadExcel() {
         { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // 제목 병합
     ];
 
+    // room 모드가 아닐 때 특별실이 있으면 3행, 없으면 2행
+    const hasRoom = mode !== "room";
+
     for (let p = 1; p <= 7; p++) {
         const subjRow = [p + "교시"];
         const subRow = [""];
+        const roomRow = hasRoom ? [""] : null;
 
         DAYS.forEach(day => {
-            if (p > MAX_PERIODS[day]) { subjRow.push(""); subRow.push(""); return; }
+            if (p > MAX_PERIODS[day]) {
+                subjRow.push(""); subRow.push("");
+                if (roomRow) roomRow.push("");
+                return;
+            }
             const cell = data[day] ? data[day][p] : null;
-            if (!cell) { subjRow.push(""); subRow.push(""); return; }
+            if (!cell) {
+                subjRow.push(""); subRow.push("");
+                if (roomRow) roomRow.push("");
+                return;
+            }
 
             if (Array.isArray(cell)) {
                 subjRow.push(cell.map(c => c.subject).join('/'));
-                subRow.push(mode === "teacher"
-                    ? cell.map(c => c.class||c["class"]).join('/')
-                    : cell.map(c => c.teacher).join(', '));
+                if (mode === "teacher") subRow.push(cell.map(c => c.class||c["class"]).join('/'));
+                else if (mode === "class") subRow.push(cell.map(c => c.teacher).join(', '));
+                else subRow.push(cell.map(c => c.teacher + ' ' + (c.class||c["class"])).join(', '));
+                if (roomRow) roomRow.push(getCellRoom(cell));
             } else {
                 subjRow.push(cell.subject);
-                subRow.push(mode === "teacher" ? (cell.class||cell["class"]||"") : (cell.teacher||""));
+                if (mode === "teacher") subRow.push(cell.class||cell["class"]||"");
+                else if (mode === "class") subRow.push(cell.teacher||"");
+                else subRow.push((cell.teacher||"") + " " + (cell.class||cell["class"]||""));
+                if (roomRow) roomRow.push(cell.room||"");
             }
         });
 
         sheetData.push(subjRow);
         sheetData.push(subRow);
+        if (roomRow) sheetData.push(roomRow);
 
-        // 교시 셀 병합 (2행을 1개로)
-        const startRow = sheetData.length - 2;
-        merges.push({ s: { r: startRow, c: 0 }, e: { r: startRow + 1, c: 0 } });
+        // 교시 셀 병합
+        const rowCount = roomRow ? 3 : 2;
+        const startRow = sheetData.length - rowCount;
+        merges.push({ s: { r: startRow, c: 0 }, e: { r: startRow + rowCount - 1, c: 0 } });
     }
 
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
@@ -379,6 +483,7 @@ td { border: 1px solid #cbd5e1; padding: 8px 4px; text-align: center; vertical-a
 td:first-child { font-weight: 700; color: #4f46e5; background: #f5f3ff !important; font-size: 0.9rem; }
 .cell-subject { font-weight: 600; color: #1e293b; font-size: 0.82rem; line-height: 1.3; }
 .cell-sub { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
+.cell-room { font-size: 0.65rem; color: #e67e22; font-weight: 600; margin-top: 1px; }
 .cell-empty { background: #fafbff !important; }
 .print-footer { text-align: center; margin-top: 12px; font-size: 0.7rem; color: #94a3b8; }
 </style>
