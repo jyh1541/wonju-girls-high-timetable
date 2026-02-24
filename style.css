@@ -200,16 +200,16 @@ body {
 .grade-3 { background: #f0fdf4; }
 
 /* 과목별 색상 (학반 시간표용) */
-.subj-korean  { background: #fefce8; }
-.subj-english { background: #eff6ff; }
-.subj-math    { background: #fdf2f8; }
-.subj-science { background: #ecfdf5; }
-.subj-social  { background: #f5f3ff; }
-.subj-pe      { background: #fff7ed; }
-.subj-music   { background: #eef2ff; }
-.subj-art     { background: #fdf2f8; }
-.subj-tech    { background: #ecfdf5; }
-.subj-etc     { background: #f8fafc; }
+.subj-korean  { background: #fef9c3; } /* 노랑 */
+.subj-english { background: #bfdbfe; } /* 파랑 */
+.subj-math    { background: #fbcfe8; } /* 분홍 */
+.subj-science { background: #a7f3d0; } /* 초록 */
+.subj-social  { background: #c4b5fd; } /* 보라 */
+.subj-pe      { background: #fed7aa; } /* 주황 */
+.subj-music   { background: #99f6e4; } /* 청록 */
+.subj-art     { background: #f0abfc; } /* 자주 */
+.subj-tech    { background: #d9f99d; } /* 연두 */
+.subj-etc     { background: #fecaca; } /* 연빨강 */
 
 /* 범례 */
 .legend {

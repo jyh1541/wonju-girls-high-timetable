@@ -91,20 +91,23 @@ function getComboColor(className, subject) {
     return COMBO_COLOR_MAP[key];
 }
 
-// 학반 시간표: 과목 기준 색상
-function getSubjectColor(subject) {
+// 학반 시간표: 과목별 동적 색상 배정 (최대 15색)
+const SUBJ_PALETTE = [
+    "#fef9c3","#bfdbfe","#fbcfe8","#a7f3d0","#c4b5fd",
+    "#fed7aa","#99f6e4","#f0abfc","#d9f99d","#fecaca",
+    "#e0e7ff","#fde68a","#ccfbf1","#fecdd3","#bae6fd",
+];
+const SUBJ_COLOR_MAP = {};
+let subjColorIdx = 0;
+
+function getSubjectDynColor(subject) {
     if (!subject) return "";
-    const s = subject.replace(/^[A-K]/, "");
-    if (/국어|문학|독서|화법|언어/.test(s)) return "subj-korean";
-    if (/영어|영문|공통영어/.test(s)) return "subj-english";
-    if (/수학|미적|확률|기하/.test(s)) return "subj-math";
-    if (/과학|물리|화학|생명|지구|생물/.test(s)) return "subj-science";
-    if (/사회|역사|지리|정치|경제|윤리|한국사|동아시아|세계사/.test(s)) return "subj-social";
-    if (/체육/.test(s)) return "subj-pe";
-    if (/음악/.test(s)) return "subj-music";
-    if (/미술/.test(s)) return "subj-art";
-    if (/기술|가정|정보|기가/.test(s)) return "subj-tech";
-    return "subj-etc";
+    const key = subject;
+    if (!SUBJ_COLOR_MAP[key]) {
+        SUBJ_COLOR_MAP[key] = SUBJ_PALETTE[subjColorIdx % SUBJ_PALETTE.length];
+        subjColorIdx++;
+    }
+    return SUBJ_COLOR_MAP[key];
 }
 
 function renderTable(data, mode) {
@@ -137,7 +140,7 @@ function renderTable(data, mode) {
                     const bg = getComboColor(cell[0].class || cell[0]["class"], cell[0].subject);
                     html += `<td style="background:${bg}"><div class="cell-subject">${subjects}</div><div class="cell-sub">${sub}</div></td>`;
                 } else {
-                    html += `<td class="${getSubjectColor(cell[0].subject)}"><div class="cell-subject">${subjects}</div><div class="cell-sub">${sub}</div></td>`;
+                    html += `<td style="background:${getSubjectDynColor(cell[0].subject)}"><div class="cell-subject">${subjects}</div><div class="cell-sub">${sub}</div></td>`;
                 }
                 return;
             }
@@ -149,7 +152,7 @@ function renderTable(data, mode) {
                 const bg = getComboColor(className, subject);
                 html += `<td style="background:${bg}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div></td>`;
             } else {
-                html += `<td class="${getSubjectColor(subject)}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div></td>`;
+                html += `<td style="background:${getSubjectDynColor(subject)}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div></td>`;
             }
         });
         html += '</tr>';
@@ -241,14 +244,9 @@ function buildImageHTML() {
     return html;
 }
 
-// 과목 CSS 클래스 → 실제 배경색
+// 이미지용 과목 배경색
 function getSubjectBg(subject) {
-    const map = {
-        "subj-korean":"#fefce8","subj-english":"#eff6ff","subj-math":"#fdf2f8",
-        "subj-science":"#ecfdf5","subj-social":"#f5f3ff","subj-pe":"#fff7ed",
-        "subj-music":"#eef2ff","subj-art":"#fdf2f8","subj-tech":"#ecfdf5","subj-etc":"#f8fafc"
-    };
-    return map[getSubjectColor(subject)] || "#f8fafc";
+    return getSubjectDynColor(subject) || "#f8fafc";
 }
 
 // 이미지 다운로드
