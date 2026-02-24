@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시간표</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 헤더 -->
+        <div class="header-card">
+            <h1>시간표</h1>
+            <div class="subtitle">2026학년도</div>
+        </div>
+
+        <!-- 탭 -->
+        <div class="tab-wrap">
+            <button id="tab-teacher" class="tab-btn active" onclick="switchTab('teacher')">교사별</button>
+            <button id="tab-class" class="tab-btn" onclick="switchTab('class')">학반별</button>
+        </div>
+
+        <!-- 교사 선택 -->
+        <div id="select-teacher" class="select-wrap">
+            <select id="teacher-dropdown" onchange="onTeacherSelect(this.value)">
+                <option value="">교사를 선택하세요</option>
+            </select>
+        </div>
+
+        <!-- 학반 선택 -->
+        <div id="select-class" class="select-wrap hidden">
+            <select id="class-dropdown" onchange="onClassSelect(this.value)">
+                <option value="">학반을 선택하세요</option>
+            </select>
+        </div>
+
+        <!-- 시간표 표시 영역 -->
+        <div id="timetable-container">
+            <div class="placeholder">
+                <div class="placeholder-icon">📋</div>
+                위에서 선택하면 시간표가 표시됩니다
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

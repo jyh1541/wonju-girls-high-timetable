@@ -1,0 +1,261 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f0f4ff;
+    min-height: 100vh;
+    padding-bottom: 40px;
+}
+
+#app {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 24px 16px 0;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 헤더 */
+.header-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 12px rgba(99,102,241,0.08);
+    text-align: center;
+}
+
+.header-card h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #6366f1, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-card .subtitle {
+    font-size: 0.75rem;
+    color: #a5b4fc;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+/* 탭 */
+.tab-wrap {
+    display: flex;
+    background: #fff;
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 11px 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    color: #94a3b8;
+    background: transparent;
+}
+
+.tab-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, #818cf8, #a78bfa);
+    box-shadow: 0 4px 14px rgba(129,140,248,0.35);
+}
+
+.tab-btn:not(.active):hover { color: #6366f1; background: #f5f3ff; }
+
+/* 드롭다운 */
+.select-wrap { margin-bottom: 14px; }
+
+.select-wrap select {
+    width: 100%;
+    padding: 13px 40px 13px 16px;
+    border: 2px solid #e0e7ff;
+    border-radius: 14px;
+    background: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #334155;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.select-wrap select:focus {
+    outline: none;
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 4px rgba(167,139,250,0.15);
+}
+
+/* 시간표 카드 */
+.table-card {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(99,102,241,0.08);
+    animation: tableIn 0.35s ease;
+}
+
+@keyframes tableIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* 테이블 */
+.tt-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.tt-table th {
+    background: linear-gradient(135deg, #818cf8, #a78bfa);
+    color: #fff;
+    padding: 12px 4px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.82rem;
+    letter-spacing: 2px;
+}
+
+.tt-table th:first-child {
+    width: 34px;
+    letter-spacing: 0;
+    font-size: 0.7rem;
+}
+
+.tt-table td {
+    border: 1px solid #f1f5f9;
+    padding: 5px 2px;
+    text-align: center;
+    vertical-align: middle;
+    height: 54px;
+    transition: transform 0.15s ease;
+    position: relative;
+}
+
+.tt-table td:first-child {
+    font-weight: 700;
+    color: #818cf8;
+    background: #faf8ff;
+    font-size: 0.82rem;
+}
+
+/* 행 애니메이션 */
+.tt-table tbody tr {
+    animation: rowSlide 0.35s ease backwards;
+}
+.tt-table tbody tr:nth-child(1) { animation-delay: 0.03s; }
+.tt-table tbody tr:nth-child(2) { animation-delay: 0.06s; }
+.tt-table tbody tr:nth-child(3) { animation-delay: 0.09s; }
+.tt-table tbody tr:nth-child(4) { animation-delay: 0.12s; }
+.tt-table tbody tr:nth-child(5) { animation-delay: 0.15s; }
+.tt-table tbody tr:nth-child(6) { animation-delay: 0.18s; }
+.tt-table tbody tr:nth-child(7) { animation-delay: 0.21s; }
+
+@keyframes rowSlide {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 셀 내용 */
+.cell-subject {
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.3;
+    font-size: 0.68rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cell-sub {
+    font-size: 0.6rem;
+    color: #64748b;
+    margin-top: 1px;
+    font-weight: 500;
+}
+
+/* 빈 셀 */
+.cell-empty { background: #fafbff; }
+
+/* 학년별 색상 (교사 시간표용) */
+.grade-1 { background: #eff6ff; }
+.grade-2 { background: #fef3c7; }
+.grade-3 { background: #f0fdf4; }
+
+/* 과목별 색상 (학반 시간표용) */
+.subj-korean  { background: #fefce8; }
+.subj-english { background: #eff6ff; }
+.subj-math    { background: #fdf2f8; }
+.subj-science { background: #ecfdf5; }
+.subj-social  { background: #f5f3ff; }
+.subj-pe      { background: #fff7ed; }
+.subj-music   { background: #eef2ff; }
+.subj-art     { background: #fdf2f8; }
+.subj-tech    { background: #ecfdf5; }
+.subj-etc     { background: #f8fafc; }
+
+/* 범례 */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* 플레이스홀더 */
+.placeholder {
+    text-align: center;
+    padding: 56px 20px;
+    color: #a5b4fc;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.placeholder-icon {
+    font-size: 2.8rem;
+    margin-bottom: 12px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.hidden { display: none; }
