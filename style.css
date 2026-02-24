@@ -181,9 +181,7 @@ body {
     color: #1e293b;
     line-height: 1.3;
     font-size: 0.68rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: keep-all;
 }
 
 .cell-sub {
@@ -257,5 +255,138 @@ body {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
 }
+
+/* 액션 버튼 그룹 */
+.action-btns {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 11px 6px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #fff;
+}
+
+.action-btn:hover { transform: translateY(-1px); }
+.action-btn:active { transform: translateY(0); }
+
+.btn-image {
+    background: linear-gradient(135deg, #818cf8, #a78bfa);
+    box-shadow: 0 3px 10px rgba(129,140,248,0.3);
+}
+.btn-excel {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    box-shadow: 0 3px 10px rgba(16,185,129,0.3);
+}
+.btn-print {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    box-shadow: 0 3px 10px rgba(59,130,246,0.3);
+}
+
+/* 풋터 */
+.footer {
+    text-align: center;
+    padding: 20px 0 8px;
+    font-size: 0.72rem;
+    color: #a5b4fc;
+    font-weight: 500;
+}
+
+/* 인쇄용 스타일 */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 15mm 12mm;
+    }
+
+    body {
+        background: #fff !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    #app {
+        max-width: 100% !important;
+        padding: 0 !important;
+        animation: none !important;
+    }
+
+    .header-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 10px 0 !important;
+        margin-bottom: 8px !important;
+        border-radius: 0 !important;
+    }
+
+    .header-card h1 {
+        font-size: 1.6rem !important;
+        background: none !important;
+        -webkit-text-fill-color: #1e293b !important;
+        color: #1e293b !important;
+    }
+
+    .header-card .subtitle {
+        color: #64748b !important;
+        font-size: 0.85rem !important;
+    }
+
+    .tab-wrap, .select-wrap, .action-btns, .placeholder { display: none !important; }
+
+    .table-card {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        border: 2px solid #334155 !important;
+        animation: none !important;
+    }
+
+    .tt-table { font-size: 0.85rem !important; }
+
+    .tt-table th {
+        background: #4f46e5 !important;
+        padding: 10px 6px !important;
+        font-size: 0.95rem !important;
+    }
+
+    .tt-table td {
+        border: 1px solid #cbd5e1 !important;
+        height: auto !important;
+        padding: 8px 4px !important;
+    }
+
+    .tt-table tbody tr { animation: none !important; }
+
+    .cell-subject { font-size: 0.82rem !important; }
+    .cell-sub { font-size: 0.72rem !important; }
+
+    .footer {
+        color: #94a3b8 !important;
+        font-size: 0.7rem !important;
+        padding: 8px 0 !important;
+    }
+
+    .print-label {
+        text-align: center;
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+}
+
+.print-label { display: none; }
 
 .hidden { display: none; }

@@ -37,32 +37,58 @@ function switchTab(tab) {
     }
 }
 
+let currentLabel = "";
+
 function showPlaceholder() {
     document.getElementById("timetable-container").innerHTML =
         '<div class="placeholder"><div class="placeholder-icon">📋</div>위에서 선택하면 시간표가 표시됩니다</div>';
+    document.getElementById("action-btns").classList.add("hidden");
+    currentLabel = "";
+}
+
+function showActionBtns() {
+    document.getElementById("action-btns").classList.remove("hidden");
 }
 
 function onTeacherSelect(name) {
     if (!name) { showPlaceholder(); return; }
     const data = TIMETABLE_DATA.teachers[name];
     if (!data) return;
+    currentLabel = name + " 선생님";
     renderTable(data, "teacher");
+    showActionBtns();
 }
 
 function onClassSelect(name) {
     if (!name) { showPlaceholder(); return; }
     const data = TIMETABLE_DATA.classes[name];
     if (!data) return;
+    currentLabel = name + "반";
     renderTable(data, "class");
+    showActionBtns();
 }
 
-// 교사 시간표: 학반(학년) 기준 색상
-function getGradeColor(className) {
-    if (!className) return "";
-    if (className.startsWith("1-")) return "grade-1";
-    if (className.startsWith("2-")) return "grade-2";
-    if (className.startsWith("3-")) return "grade-3";
-    return "";
+// 교사 시간표: 학반+과목 조합별 고유 색상
+const COMBO_PALETTE = [
+    "#dbeafe","#fef3c7","#d1fae5","#fce7f3","#ede9fe",
+    "#ffedd5","#e0e7ff","#ccfbf1","#fef9c3","#fae8ff",
+    "#cffafe","#fee2e2","#dcfce7","#f5d0fe","#e0f2fe",
+    "#fbcfe8","#d9f99d","#bfdbfe","#fecaca","#c7d2fe",
+    "#fed7aa","#a7f3d0","#c4b5fd","#fecdd3","#bae6fd",
+    "#fde68a","#bbf7d0","#ddd6fe","#fdba74","#99f6e4",
+    "#f0abfc","#a5b4fc","#fca5a5","#6ee7b7",
+];
+const COMBO_COLOR_MAP = {};
+let comboColorIdx = 0;
+
+function getComboColor(className, subject) {
+    if (!className || !subject) return "";
+    const key = className + "|" + subject;
+    if (!COMBO_COLOR_MAP[key]) {
+        COMBO_COLOR_MAP[key] = COMBO_PALETTE[comboColorIdx % COMBO_PALETTE.length];
+        comboColorIdx++;
+    }
+    return COMBO_COLOR_MAP[key];
 }
 
 // 학반 시간표: 과목 기준 색상
@@ -107,33 +133,277 @@ function renderTable(data, mode) {
                 const sub = mode === "teacher"
                     ? cell.map(c => c.class || c["class"]).join('/')
                     : cell.map(c => c.teacher).join(', ');
-                const color = mode === "teacher"
-                    ? getGradeColor(cell[0].class || cell[0]["class"])
-                    : getSubjectColor(cell[0].subject);
-                html += `<td class="${color}"><div class="cell-subject">${subjects}</div><div class="cell-sub">${sub}</div></td>`;
+                if (mode === "teacher") {
+                    const bg = getComboColor(cell[0].class || cell[0]["class"], cell[0].subject);
+                    html += `<td style="background:${bg}"><div class="cell-subject">${subjects}</div><div class="cell-sub">${sub}</div></td>`;
+                } else {
+                    html += `<td class="${getSubjectColor(cell[0].subject)}"><div class="cell-subject">${subjects}</div><div class="cell-sub">${sub}</div></td>`;
+                }
                 return;
             }
 
             const subject = cell.subject;
             const className = cell.class || cell["class"];
             const sub = mode === "teacher" ? className : cell.teacher;
-            const color = mode === "teacher" ? getGradeColor(className) : getSubjectColor(subject);
-            html += `<td class="${color}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div></td>`;
+            if (mode === "teacher") {
+                const bg = getComboColor(className, subject);
+                html += `<td style="background:${bg}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div></td>`;
+            } else {
+                html += `<td class="${getSubjectColor(subject)}"><div class="cell-subject">${subject}</div><div class="cell-sub">${sub || ""}</div></td>`;
+            }
         });
         html += '</tr>';
     }
 
     html += '</tbody></table>';
 
-    // 범례
-    if (mode === "teacher") {
-        html += '<div class="legend">';
-        html += '<div class="legend-item"><span class="legend-dot" style="background:#eff6ff;border:1px solid #bfdbfe"></span>1학년</div>';
-        html += '<div class="legend-item"><span class="legend-dot" style="background:#fef3c7;border:1px solid #fde68a"></span>2학년</div>';
-        html += '<div class="legend-item"><span class="legend-dot" style="background:#f0fdf4;border:1px solid #bbf7d0"></span>3학년</div>';
-        html += '</div>';
-    }
-
     html += '</div>';
     container.innerHTML = html;
+}
+
+// 현재 시간표 데이터를 2D 배열로 추출
+function getCurrentTableData() {
+    const data = currentTab === "teacher"
+        ? TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value]
+        : TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    if (!data) return null;
+
+    const mode = currentTab;
+    const rows = [["교시", "월", "화", "수", "목", "금"]];
+
+    for (let p = 1; p <= 7; p++) {
+        const row = [p + "교시"];
+        DAYS.forEach(day => {
+            if (p > MAX_PERIODS[day]) { row.push(""); return; }
+            const cell = data[day] ? data[day][p] : null;
+            if (!cell) { row.push(""); return; }
+            if (Array.isArray(cell)) {
+                const subj = cell.map(c => c.subject).join('/');
+                const sub = mode === "teacher"
+                    ? cell.map(c => c.class || c["class"]).join('/')
+                    : cell.map(c => c.teacher).join(', ');
+                row.push(subj + "\n" + sub);
+            } else {
+                const sub = mode === "teacher" ? (cell.class || cell["class"]) : cell.teacher;
+                row.push(cell.subject + "\n" + (sub || ""));
+            }
+        });
+        rows.push(row);
+    }
+    return rows;
+}
+
+// 이미지용 테이블 HTML을 데이터에서 직접 생성 (DOM 클론 없이)
+function buildImageHTML() {
+    const data = currentTab === "teacher"
+        ? TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value]
+        : TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    if (!data) return "";
+    const mode = currentTab;
+
+    const thStyle = 'style="background:#4f46e5;color:#fff;padding:10px 6px;text-align:center;font-weight:600;font-size:13px;letter-spacing:2px;border:1px solid #4f46e5;"';
+    const thFirstStyle = 'style="background:#4f46e5;color:#fff;padding:10px 4px;text-align:center;font-weight:600;font-size:11px;width:36px;border:1px solid #4f46e5;"';
+    const emptyStyle = 'style="background:#fafbff;border:1px solid #e2e8f0;height:50px;text-align:center;vertical-align:middle;padding:6px 4px;"';
+    const periodStyle = 'style="font-weight:700;color:#4f46e5;background:#f5f3ff;font-size:13px;border:1px solid #e2e8f0;height:50px;text-align:center;vertical-align:middle;padding:6px 4px;"';
+
+    let html = '<table style="width:100%;border-collapse:collapse;table-layout:fixed;font-family:sans-serif;">';
+    html += `<tr><th ${thFirstStyle}></th>`;
+    DAYS.forEach(d => { html += `<th ${thStyle}>${d}</th>`; });
+    html += '</tr>';
+
+    for (let p = 1; p <= 7; p++) {
+        html += `<tr><td ${periodStyle}>${p}</td>`;
+        DAYS.forEach(day => {
+            if (p > MAX_PERIODS[day]) { html += `<td ${emptyStyle}></td>`; return; }
+            const cell = data[day] ? data[day][p] : null;
+            if (!cell) { html += `<td ${emptyStyle}></td>`; return; }
+
+            let subject, sub, bg;
+            if (Array.isArray(cell)) {
+                subject = cell.map(c => c.subject).join('/');
+                sub = mode === "teacher" ? cell.map(c => c.class||c["class"]).join('/') : cell.map(c => c.teacher).join(', ');
+                bg = mode === "teacher" ? getComboColor(cell[0].class||cell[0]["class"], cell[0].subject) : getSubjectBg(cell[0].subject);
+            } else {
+                subject = cell.subject;
+                const cn = cell.class || cell["class"];
+                sub = mode === "teacher" ? cn : cell.teacher;
+                bg = mode === "teacher" ? getComboColor(cn, subject) : getSubjectBg(subject);
+            }
+
+            html += `<td style="background:${bg};border:1px solid #e2e8f0;height:50px;text-align:center;vertical-align:middle;padding:6px 4px;">`;
+            html += `<div style="font-weight:600;color:#1e293b;font-size:11px;line-height:1.3;">${subject}</div>`;
+            html += `<div style="font-size:9px;color:#64748b;margin-top:2px;">${sub || ""}</div>`;
+            html += '</td>';
+        });
+        html += '</tr>';
+    }
+    html += '</table>';
+    return html;
+}
+
+// 과목 CSS 클래스 → 실제 배경색
+function getSubjectBg(subject) {
+    const map = {
+        "subj-korean":"#fefce8","subj-english":"#eff6ff","subj-math":"#fdf2f8",
+        "subj-science":"#ecfdf5","subj-social":"#f5f3ff","subj-pe":"#fff7ed",
+        "subj-music":"#eef2ff","subj-art":"#fdf2f8","subj-tech":"#ecfdf5","subj-etc":"#f8fafc"
+    };
+    return map[getSubjectColor(subject)] || "#f8fafc";
+}
+
+// 이미지 다운로드
+function downloadImage() {
+    const tableHTML = buildImageHTML();
+    if (!tableHTML) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "position:absolute;left:0;top:0;padding:28px 24px 18px;background:#fff;width:560px;z-index:99999;";
+    wrapper.innerHTML = `
+        <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:18px;font-weight:700;color:#4f46e5;">원주여자고등학교</div>
+            <div style="font-size:13px;color:#64748b;margin-top:4px;">${currentLabel} 시간표</div>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">${tableHTML}</div>
+    `;
+
+    document.body.appendChild(wrapper);
+
+    html2canvas(wrapper, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+    }).then(canvas => {
+        document.body.removeChild(wrapper);
+        const link = document.createElement("a");
+        link.download = `시간표_${currentLabel}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }).catch(err => {
+        console.error(err);
+        document.body.removeChild(wrapper);
+        alert("이미지 저장에 실패했습니다.");
+    });
+}
+
+// 엑셀(.xlsx) 다운로드 - 과목/학반(교사) 2행으로 분리
+function downloadExcel() {
+    const data = currentTab === "teacher"
+        ? TIMETABLE_DATA.teachers[document.getElementById("teacher-dropdown").value]
+        : TIMETABLE_DATA.classes[document.getElementById("class-dropdown").value];
+    if (!data) return;
+    const mode = currentTab;
+
+    const wb = XLSX.utils.book_new();
+    const sheetData = [
+        [`원주여자고등학교 ${currentLabel} 시간표`],
+        [],
+        ["교시", "월", "화", "수", "목", "금"],
+    ];
+
+    const merges = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // 제목 병합
+    ];
+
+    for (let p = 1; p <= 7; p++) {
+        const subjRow = [p + "교시"];
+        const subRow = [""];
+
+        DAYS.forEach(day => {
+            if (p > MAX_PERIODS[day]) { subjRow.push(""); subRow.push(""); return; }
+            const cell = data[day] ? data[day][p] : null;
+            if (!cell) { subjRow.push(""); subRow.push(""); return; }
+
+            if (Array.isArray(cell)) {
+                subjRow.push(cell.map(c => c.subject).join('/'));
+                subRow.push(mode === "teacher"
+                    ? cell.map(c => c.class||c["class"]).join('/')
+                    : cell.map(c => c.teacher).join(', '));
+            } else {
+                subjRow.push(cell.subject);
+                subRow.push(mode === "teacher" ? (cell.class||cell["class"]||"") : (cell.teacher||""));
+            }
+        });
+
+        sheetData.push(subjRow);
+        sheetData.push(subRow);
+
+        // 교시 셀 병합 (2행을 1개로)
+        const startRow = sheetData.length - 2;
+        merges.push({ s: { r: startRow, c: 0 }, e: { r: startRow + 1, c: 0 } });
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    ws["!merges"] = merges;
+
+    ws["!cols"] = [
+        { wch: 8 },
+        { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 },
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "시간표");
+    XLSX.writeFile(wb, `시간표_${currentLabel}.xlsx`);
+}
+
+// 인쇄 - 별도 창에서 깔끔하게 인쇄
+function printTimetable() {
+    const card = document.querySelector(".table-card");
+    if (!card) return;
+
+    const printWin = window.open("", "_blank", "width=800,height=900");
+    if (!printWin) { alert("팝업이 차단되었습니다. 팝업을 허용해주세요."); return; }
+
+    // 원본 테이블의 셀 배경색 추출
+    const origCells = card.querySelectorAll("td, th");
+    const bgColors = [];
+    origCells.forEach(cell => {
+        bgColors.push(getComputedStyle(cell).backgroundColor);
+    });
+
+    const tableHTML = card.innerHTML;
+
+    printWin.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>시간표 인쇄</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+@page { size: A4 portrait; margin: 15mm 12mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+.print-header { text-align: center; margin-bottom: 16px; }
+.print-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
+.print-header p { font-size: 0.9rem; color: #64748b; margin-top: 4px; }
+.table-card { border: 2px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th { background: #4f46e5 !important; color: #fff !important; padding: 10px 6px; text-align: center; font-weight: 600; font-size: 0.95rem; letter-spacing: 2px; }
+th:first-child { width: 40px; letter-spacing: 0; font-size: 0.8rem; }
+td { border: 1px solid #cbd5e1; padding: 8px 4px; text-align: center; vertical-align: middle; height: 56px; }
+td:first-child { font-weight: 700; color: #4f46e5; background: #f5f3ff !important; font-size: 0.9rem; }
+.cell-subject { font-weight: 600; color: #1e293b; font-size: 0.82rem; line-height: 1.3; }
+.cell-sub { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
+.cell-empty { background: #fafbff !important; }
+.print-footer { text-align: center; margin-top: 12px; font-size: 0.7rem; color: #94a3b8; }
+</style>
+</head><body>
+<div class="print-header">
+    <h1>원주여자고등학교</h1>
+    <p>${currentLabel} 시간표</p>
+</div>
+<div class="table-card">${tableHTML}</div>
+</body></html>`);
+
+    // 배경색 적용
+    const newCells = printWin.document.querySelectorAll("td, th");
+    newCells.forEach((cell, i) => {
+        if (bgColors[i] && bgColors[i] !== "rgba(0, 0, 0, 0)") {
+            cell.style.backgroundColor = bgColors[i];
+        }
+    });
+
+    printWin.document.close();
+    printWin.onload = function() {
+        printWin.focus();
+        printWin.print();
+        printWin.onafterprint = function() { printWin.close(); };
+    };
 }

@@ -10,8 +10,8 @@
     <div id="app">
         <!-- 헤더 -->
         <div class="header-card">
-            <h1>시간표</h1>
-            <div class="subtitle">2026학년도</div>
+            <h1>원주여자고등학교</h1>
+            <div class="subtitle">2026학년도 1학기 시간표</div>
         </div>
 
         <!-- 탭 -->
@@ -41,8 +41,29 @@
                 위에서 선택하면 시간표가 표시됩니다
             </div>
         </div>
+
+        <!-- 액션 버튼들 -->
+        <div id="action-btns" class="action-btns hidden">
+            <button class="action-btn btn-image" onclick="downloadImage()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                이미지 저장
+            </button>
+            <button class="action-btn btn-excel" onclick="downloadExcel()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                엑셀 저장
+            </button>
+            <button class="action-btn btn-print" onclick="printTimetable()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                인쇄
+            </button>
+        </div>
+
+        <!-- 풋터 -->
+        <footer class="footer">만든이 : 호똑쌤(지연호)</footer>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="data.js"></script>
     <script src="app.js"></script>
 </body>
