@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>출석부</title>
+    <title> </title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
@@ -88,7 +88,7 @@
         .hidden { display: none !important; }
 
         .page-wrap {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 24px auto;
             padding: 0 20px;
         }
@@ -128,10 +128,10 @@
             table-layout: fixed;
         }
         th, td {
-            border: 1px solid #cbd5e0;
+            border: 1px solid #d2d6dc;
             text-align: center;
             font-size: 11px;
-            padding: 4px 2px;
+            padding: 5px 2px;
             vertical-align: middle;
         }
         th {
@@ -139,12 +139,8 @@
             font-weight: 600;
             color: #4a5568;
             border-bottom: 2px solid #a0aec0;
-        }
-        th.day-header { padding: 3px 0; }
-        th .dow {
-            font-size: 9px;
-            font-weight: 400;
-            color: #a0aec0;
+            padding: 6px 2px;
+            font-size: 10px;
         }
         td.name-cell {
             font-weight: 500;
@@ -156,7 +152,7 @@
             font-weight: 400;
             color: #718096;
         }
-        td.empty-cell { background: #fff; }
+        td.empty-cell { background: #fff; min-height: 20px; }
         td.remark-cell { background: #fafbfd; }
         tbody tr:nth-child(even) td { background: #f7f9fc; }
         tbody tr:nth-child(even) td.remark-cell { background: #f0f3f8; }
@@ -165,31 +161,48 @@
         @media print {
             .no-print { display: none !important; }
             body { background: white; }
-            @page { size: A4 landscape; margin: 8mm; }
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
 
             .page-wrap { margin: 0; padding: 0; max-width: none; }
 
             .sheet {
                 border: none; border-radius: 0;
-                padding: 0; box-shadow: none;
+                padding: 10mm 8mm;
+                box-shadow: none;
             }
             .sheet-header {
-                margin-bottom: 8px; padding-bottom: 6px;
-                border-bottom: 1.5px solid #000;
+                margin-bottom: 10px; padding-bottom: 8px;
+                border-bottom: 2px solid #5a67d8;
             }
-            .sheet-header h2 { font-size: 16px; color: #000; }
-            .sheet-meta { font-size: 11px; margin-bottom: 6px; color: #000; }
+            .sheet-header h2 {
+                font-size: 18px; color: #333;
+                letter-spacing: 8px;
+            }
+            .sheet-meta {
+                font-size: 11px; margin-bottom: 8px; color: #444;
+                font-weight: 500;
+            }
 
             table { page-break-inside: avoid; }
             th, td {
-                border: 1px solid #333 !important;
-                font-size: 9px; padding: 2px 1px;
+                border: 1px solid #999 !important;
+                font-size: 9px; padding: 3px 1px;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
-            th { background: #f0f0f0 !important; border-bottom: 1.5px solid #000 !important; }
-            tbody tr:nth-child(even) td { background: #f8f8f8 !important; }
-            tbody tr:nth-child(5n) td { border-bottom: 1.5px solid #333 !important; }
+            th {
+                background: #eef0f8 !important;
+                border-bottom: 2px solid #667 !important;
+                color: #333 !important;
+                font-size: 8px;
+            }
+            tbody tr:nth-child(even) td { background: #f6f7fb !important; }
+            tbody tr:nth-child(5n) td { border-bottom: 2px solid #5a67d8 !important; }
+            td.name-cell { font-size: 9px; }
+            td.num-cell { color: #555; }
         }
     </style>
 </head>
@@ -221,11 +234,6 @@
         <div id="wrap-group" class="field hidden">
             <label>그룹</label>
             <select id="sel-group" onchange="render()"></select>
-        </div>
-
-        <div class="field">
-            <label>월</label>
-            <input type="month" id="sel-month" onchange="render()">
         </div>
 
         <button class="btn-print" onclick="window.print()">&#128424; 인쇄</button>
@@ -262,18 +270,7 @@ const movingClasses = {"2":[["사회와 문화","B","2-1","신예리",[[1,12,"�
 let currentMode = 'fixed';
 let currentMovingGroups = [];
 
-function getWeekdays(yearMonth) {
-    const [y, m] = yearMonth.split('-').map(Number);
-    const days = [];
-    const dayNames = ['일','월','화','수','목','금','토'];
-    const daysInMonth = new Date(y, m, 0).getDate();
-    for (let d = 1; d <= daysInMonth; d++) {
-        const date = new Date(y, m - 1, d);
-        const dow = date.getDay();
-        if (dow >= 1 && dow <= 5) days.push({ day: d, dow: dayNames[dow] });
-    }
-    return days;
-}
+const BLANK_COLS = 20;
 
 function switchMode(mode) {
     if (currentMode === mode) return;
@@ -342,39 +339,34 @@ function populateGroups() {
 }
 
 function render() {
-    const month = document.getElementById('sel-month').value;
-    const days = getWeekdays(month);
-    const [y, m] = month.split('-');
-    if (currentMode === 'fixed') renderFixed(days, y, m);
-    else renderMoving(days, y, m);
+    if (currentMode === 'fixed') renderFixed();
+    else renderMoving();
 }
 
-function renderFixed(days, y, m) {
+function renderFixed() {
     const grade = document.getElementById('sel-grade').value;
     const cls = document.getElementById('sel-class').value;
     const subject = document.getElementById('sel-subject').value;
     const list = students[`${grade}-${cls}`] || [];
 
     document.getElementById('info-left').textContent = `${grade}학년 ${cls}반 · ${subject}`;
-    document.getElementById('info-right').textContent = `${y}년 ${parseInt(m)}월 · ${list.length}명`;
+    document.getElementById('info-right').textContent = `${list.length}명`;
 
-    let head = '<tr><th style="width:26px">순번</th><th style="width:26px">반</th><th style="width:26px">번호</th><th style="width:52px">성명</th>';
-    days.forEach(d => {
-        head += `<th class="day-header"><div>${d.day}</div><div class="dow">${d.dow}</div></th>`;
-    });
-    head += '<th style="width:36px">비고</th></tr>';
+    let head = '<tr><th style="width:24px">순번</th><th style="width:22px">반</th><th style="width:24px">번호</th><th style="width:48px">성명</th>';
+    for (let c = 1; c <= BLANK_COLS; c++) head += '<th></th>';
+    head += '<th style="width:32px">비고</th></tr>';
     document.getElementById('table-head').innerHTML = head;
 
     let body = '';
     list.forEach((name, i) => {
         body += `<tr><td class="num-cell">${i + 1}</td><td class="num-cell">${cls}</td><td class="num-cell">${i + 1}</td><td class="name-cell">${name}</td>`;
-        days.forEach(() => { body += '<td class="empty-cell"></td>'; });
+        for (let c = 0; c < BLANK_COLS; c++) body += '<td class="empty-cell"></td>';
         body += '<td class="remark-cell"></td></tr>';
     });
     document.getElementById('table-body').innerHTML = body;
 }
 
-function renderMoving(days, y, m) {
+function renderMoving() {
     const grade = document.getElementById('sel-grade').value;
     const groupIdx = parseInt(document.getElementById('sel-group').value);
     const group = currentMovingGroups[groupIdx];
@@ -389,27 +381,23 @@ function renderMoving(days, y, m) {
 
     const [subject, timeSlot, classroom, teacher, studentList] = group;
     document.getElementById('info-left').textContent = `${grade}학년 · ${subject} · ${timeSlot} · ${classroom} · ${teacher}`;
-    document.getElementById('info-right').textContent = `${y}년 ${parseInt(m)}월 · ${studentList.length}명`;
+    document.getElementById('info-right').textContent = `${studentList.length}명`;
 
-    let head = '<tr><th style="width:26px">순번</th><th style="width:26px">반</th><th style="width:26px">번호</th><th style="width:52px">성명</th>';
-    days.forEach(d => {
-        head += `<th class="day-header"><div>${d.day}</div><div class="dow">${d.dow}</div></th>`;
-    });
-    head += '<th style="width:36px">비고</th></tr>';
+    let head = '<tr><th style="width:24px">순번</th><th style="width:22px">반</th><th style="width:24px">번호</th><th style="width:48px">성명</th>';
+    for (let c = 1; c <= BLANK_COLS; c++) head += '<th></th>';
+    head += '<th style="width:32px">비고</th></tr>';
     document.getElementById('table-head').innerHTML = head;
 
     let body = '';
     studentList.forEach(([classNum, studentNo, name], i) => {
         body += `<tr><td class="num-cell">${i + 1}</td><td class="num-cell">${classNum}</td><td class="num-cell">${studentNo}</td><td class="name-cell">${name}</td>`;
-        days.forEach(() => { body += '<td class="empty-cell"></td>'; });
+        for (let c = 0; c < BLANK_COLS; c++) body += '<td class="empty-cell"></td>';
         body += '<td class="remark-cell"></td></tr>';
     });
     document.getElementById('table-body').innerHTML = body;
 }
 
 function init() {
-    const now = new Date();
-    document.getElementById('sel-month').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     populateGrades();
 }
 
